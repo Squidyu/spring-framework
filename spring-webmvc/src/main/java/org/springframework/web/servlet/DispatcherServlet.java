@@ -65,72 +65,97 @@ import org.springframework.web.util.NestedServletException;
 import org.springframework.web.util.WebUtils;
 
 /**
+ * 用于HTTP请求处理程序/控制器的中央调度程序，例如用于Web UI控制器或基于HTTP的远程服务导出器。发送到注册的处理程序以处理Web请求，
+ * 提供方便的映射和异常处理工具。
  * Central dispatcher for HTTP request handlers/controllers, e.g. for web UI controllers
  * or HTTP-based remote service exporters. Dispatches to registered handlers for processing
  * a web request, providing convenient mapping and exception handling facilities.
  *
+ * 这个servlet非常灵活：它可以与任何工作流一起使用，安装适当的适配器类。它提供了以下功能，将其与其他请求驱动的Web MVC框架区分开来。
  * <p>This servlet is very flexible: It can be used with just about any workflow, with the
  * installation of the appropriate adapter classes. It offers the following functionality
  * that distinguishes it from other request-driven web MVC frameworks:
  *
+ * 它基于JavaBeans配置机制
  * <ul>
  * <li>It is based around a JavaBeans configuration mechanism.
  *
+ * 它可以使用任何handlermapping(handlerMapping)实现（预构建或作为应用程序的一部分提供）来控制请求到处理程序对象的路由。
  * <li>It can use any {@link HandlerMapping} implementation - pre-built or provided as part
  * of an application - to control the routing of requests to handler objects. Default is
  * {@link org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping} and
  * {@link org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping}.
+ *
+ * handlerMapping对象可以在servlet的应用程序上下文中定义为bean，实现handlerMapping接口，如果存在，则覆盖默认handlerMapping。
+ * handlerMappings可以被赋予任何bean名称（它们是按类型测试的）。
  * HandlerMapping objects can be defined as beans in the servlet's application context,
  * implementing the HandlerMapping interface, overriding the default HandlerMapping if
  * present. HandlerMappings can be given any bean name (they are tested by type).
  *
+ * 它可以使用任何handleradapter(handlerAdapter)，这允许使用任何方式处理程序接口
  * <li>It can use any {@link HandlerAdapter}; this allows for using any handler interface.
  * Default adapters are {@link org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter},
  * {@link org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter}, for Spring's
  * {@link org.springframework.web.HttpRequestHandler} and
  * {@link org.springframework.web.servlet.mvc.Controller} interfaces, respectively. A default
  * {@link org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter}
- * will be registered as well. HandlerAdapter objects can be added as beans in the
+ * will be registered as well.
+ * handlerAdapter对象可以作为bean添加到应用程序上下文中，覆盖默认的handlerAdapters。与handlerMappings类似，
+ * handlerAdapter可以被赋予任何bean名称（它们是按类型测试的）
+ * HandlerAdapter objects can be added as beans in the
  * application context, overriding the default HandlerAdapters. Like HandlerMappings,
  * HandlerAdapters can be given any bean name (they are tested by type).
  *
+ * 程序异常处理可以通过HandlerExceptionResolver(异常解析器)，例如将某些异常映射到错误页
  * <li>The dispatcher's exception resolution strategy can be specified via a
  * {@link HandlerExceptionResolver}, for example mapping certain exceptions to error pages.
  * Default are
  * {@link org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver},
  * {@link org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver}, and
  * {@link org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver}.
+ * 可以通过应用程序上下文重写这些HandlerExceptionResolver
+ * handlerExceptionResolver可以被赋予任何bean名称（它们是按类型测试的）
  * These HandlerExceptionResolvers can be overridden through the application context.
  * HandlerExceptionResolver can be given any bean name (they are tested by type).
  *
+ * 它的视图解析策略可以通过viewresolver(视图解析器)实现来指定，将符号视图名称解析为视图对象
  * <li>Its view resolution strategy can be specified via a {@link ViewResolver}
  * implementation, resolving symbolic view names into View objects. Default is
  * {@link org.springframework.web.servlet.view.InternalResourceViewResolver}.
+ * 可以通过应用程序上下文重写这些ViewResolver
+ * ViewResolver可以被赋予任何bean名称（它们是按类型测试的）
  * ViewResolver objects can be added as beans in the application context, overriding the
  * default ViewResolver. ViewResolvers can be given any bean name (they are tested by type).
  *
+ * 如果用户未提供view或view name，则配置的requesttoviewnametranslator将当前请求转换为视图名称。
  * <li>If a {@link View} or view name is not supplied by the user, then the configured
  * {@link RequestToViewNameTranslator} will translate the current request into a view name.
  * The corresponding bean name is "viewNameTranslator"; the default is
  * {@link org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator}.
  *
+ *解析multipart请求的调度由MultipartResolver的实现处理
+ * MultipartResolver的实现在Apache Commons FileUpload里面
  * <li>The dispatcher's strategy for resolving multipart requests is determined by a
  * {@link org.springframework.web.multipart.MultipartResolver} implementation.
  * Implementations for Apache Commons FileUpload and Servlet 3 are included; the typical
  * choice is {@link org.springframework.web.multipart.commons.CommonsMultipartResolver}.
  * The MultipartResolver bean name is "multipartResolver"; default is none.
  *
+ * 请求头解析由LocaleResolver完成。
  * <li>Its locale resolution strategy is determined by a {@link LocaleResolver}.
  * Out-of-the-box implementations work via HTTP accept header, cookie, or session.
  * The LocaleResolver bean name is "localeResolver"; default is
  * {@link org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver}.
  *
+ * 基于Web的主题解析策略，允许通过请求和响应进行主题解析和主题修改(没太理解这是个啥玩意儿),测试发现主题一般默认就是"theme"。
  * <li>Its theme resolution strategy is determined by a {@link ThemeResolver}.
  * Implementations for a fixed theme and for cookie and session storage are included.
  * The ThemeResolver bean name is "themeResolver"; default is
  * {@link org.springframework.web.servlet.theme.FixedThemeResolver}.
  * </ul>
  *
+ * 注意：只有@RequestMapping和HandlerMapping在dispatcher调度程序中。这是默认情况。如果需要自定义HandlerMappings或者HandlerAdapters
+ * 那就一定要相应的定义RequestMappingHandlerMapping或者RequestMappingHandlerAdapter，前提是你打算使用@requestmapping。
  * <p><b>NOTE: The {@code @RequestMapping} annotation will only be processed if a
  * corresponding {@code HandlerMapping} (for type-level annotations) and/or
  * {@code HandlerAdapter} (for method-level annotations) is present in the dispatcher.</b>
@@ -139,11 +164,15 @@ import org.springframework.web.util.WebUtils;
  * {@code RequestMappingHandlerMapping} and/or {@code RequestMappingHandlerAdapter}
  * is defined as well - provided that you intend to use {@code @RequestMapping}.
  *
+ * Web应用程序可以定义任意数量的DispatcherServlet
+ * 每个servlet都将在自己的命名空间中操作，使用映射、处理程序等加载自己的应用程序上下文。
+ * 只有由org.springframework.web.context.contextloaderlistener加载的根应用程序上下文（如果有）将被共享。
  * <p><b>A web application can define any number of DispatcherServlets.</b>
  * Each servlet will operate in its own namespace, loading its own application context
  * with mappings, handlers, etc. Only the root application context as loaded by
  * {@link org.springframework.web.context.ContextLoaderListener}, if any, will be shared.
  *
+ * 从spring3.1开始DispatcherServlet将被注入应用程序上下文而不是内部创建。在Servlet3.0+的环境生效，支持在servlet实例中注册
  * <p>As of Spring 3.1, {@code DispatcherServlet} may now be injected with a web
  * application context, rather than creating its own internally. This is useful in Servlet
  * 3.0+ environments, which support programmatic registration of servlet instances.
@@ -161,7 +190,9 @@ import org.springframework.web.util.WebUtils;
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {
 
-	/** Well-known name for the MultipartResolver object in the bean factory for this namespace. */
+
+	/** MultipartResolver在这个命名空间的名称
+	 *  Well-known name for the MultipartResolver object in the bean factory for this namespace. */
 	public static final String MULTIPART_RESOLVER_BEAN_NAME = "multipartResolver";
 
 	/** Well-known name for the LocaleResolver object in the bean factory for this namespace. */
@@ -348,6 +379,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 
 	/**
+	 * 创建一个新的dispatcherservlet，它将根据servlet init params提供的默认值和值创建自己的内部Web应用程序上下文
 	 * Create a new {@code DispatcherServlet} that will create its own internal web
 	 * application context based on defaults and values provided through servlet
 	 * init-params. Typically used in Servlet 2.5 or earlier environments, where the only
@@ -370,6 +402,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 使用给定的Web应用程序上下文新建 dispatcherservlet
 	 * Create a new {@code DispatcherServlet} with the given web application context. This
 	 * constructor is useful in Servlet 3.0+ environments where instance-based registration
 	 * of servlets is possible through the {@link ServletContext#addServlet} API.
@@ -415,6 +448,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 
 	/**
+	 * 设置是否检测此servlet上下文中的所有handlermapping bean
 	 * Set whether to detect all HandlerMapping beans in this servlet's context. Otherwise,
 	 * just a single bean with name "handlerMapping" will be expected.
 	 * <p>Default is "true". Turn this off if you want this servlet to use a single
@@ -425,6 +459,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 设置是否检测此servlet上下文中的所有HandlerAdapter bean
 	 * Set whether to detect all HandlerAdapter beans in this servlet's context. Otherwise,
 	 * just a single bean with name "handlerAdapter" will be expected.
 	 * <p>Default is "true". Turn this off if you want this servlet to use a single
@@ -435,6 +470,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 设置是否检测此servlet上下文中的所有HandlerExceptionResolver bean
 	 * Set whether to detect all HandlerExceptionResolver beans in this servlet's context. Otherwise,
 	 * just a single bean with name "handlerExceptionResolver" will be expected.
 	 * <p>Default is "true". Turn this off if you want this servlet to use a single
@@ -445,6 +481,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 设置是否检测此servlet上下文中的所有ViewResolver bean
 	 * Set whether to detect all ViewResolver beans in this servlet's context. Otherwise,
 	 * just a single bean with name "viewResolver" will be expected.
 	 * <p>Default is "true". Turn this off if you want this servlet to use a single
@@ -455,6 +492,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 设置当找不到此请求的处理程序时是否引发NoHandlerFoundException
 	 * Set whether to throw a NoHandlerFoundException when no Handler was found for this request.
 	 * This exception can then be caught with a HandlerExceptionResolver or an
 	 * {@code @ExceptionHandler} controller method.
@@ -470,6 +508,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 设置是否在include请求之后执行请求属性的清除，即在DispatcherServlet在include请求中处理之后是否重置所有请求属性的原始状态。
+	 * 否则，只重置DispatcherServlet自己的请求属性，而不重置JSP的模型属性或视图设置的特殊属性（例如，JSTL）
 	 * Set whether to perform cleanup of request attributes after an include request, that is,
 	 * whether to reset the original state of all request attributes after the DispatcherServlet
 	 * has processed within an include request. Otherwise, just the DispatcherServlet's own
@@ -487,6 +527,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 
 	/**
+	 * 这个类实现的时候调用
 	 * This implementation calls {@link #initStrategies}.
 	 */
 	@Override
@@ -495,6 +536,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 初始化此servlet使用的策略对象
 	 * Initialize the strategy objects that this servlet uses.
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
 	 */
@@ -792,6 +834,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 返回servlet的ThemeSource
 	 * Return this servlet's ThemeSource, if any; else return {@code null}.
 	 * <p>Default is to return the WebApplicationContext as ThemeSource,
 	 * provided that it implements the ThemeSource interface.
@@ -804,6 +847,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 获取这个servlet的multipartresolver（如果有的话）。
 	 * Obtain this servlet's MultipartResolver, if any.
 	 * @return the MultipartResolver used by this servlet, or {@code null} if none
 	 * (indicating that no multipart support is available)
@@ -814,6 +858,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 返回已配置的 handlermapping bean，这些bean由webapplicationContext中的类型检测到，或者来自dispatcherservlet.properties的默认策略集
 	 * Return the configured {@link HandlerMapping} beans that were detected by
 	 * type in the {@link WebApplicationContext} or initialized based on the
 	 * default set of strategies from {@literal DispatcherServlet.properties}.
@@ -829,6 +874,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 返回给定策略接口的默认策略对象。
 	 * Return the default strategy object for the given strategy interface.
 	 * <p>The default implementation delegates to {@link #getDefaultStrategies},
 	 * expecting a single object in the list.
@@ -847,6 +893,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 *为给定的策略接口创建默认策略对象列表。
 	 * Create a List of default strategy objects for the given strategy interface.
 	 * <p>The default implementation uses the "DispatcherServlet.properties" file (in the same
 	 * package as the DispatcherServlet class) to determine the class names. It instantiates
@@ -902,6 +949,7 @@ public class DispatcherServlet extends FrameworkServlet {
 
 
 	/**
+	 * 显示DispatcherServlet特定的请求属性，并将其委托给DoDispatch以进行实际调度
 	 * Exposes the DispatcherServlet-specific request attributes and delegates to {@link #doDispatch}
 	 * for the actual dispatching.
 	 */
@@ -985,6 +1033,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 处理实际发送给处理程序的过程。
+	 * 处理程序将通过按顺序应用servlet的handlerMappings获得。handlerAdapter将通过查询servlet安装的handlerAdapters来获得，
+	 * 以找到第一个支持handler类的。所有HTTP方法都由该方法处理。由handlerAdapter或处理程序本身决定哪些方法是可接受的
 	 * Process the actual dispatching to the handler.
 	 * <p>The handler will be obtained by applying the servlet's HandlerMappings in order.
 	 * The HandlerAdapter will be obtained by querying the servlet's installed HandlerAdapters
@@ -1090,6 +1141,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 处理处理程序选择和处理程序调用的结果，该结果要么是ModelAndView，要么是要解析为ModelAndView的异常
 	 * Handle the result of handler selection and handler invocation, which is
 	 * either a ModelAndView or an Exception to be resolved to a ModelAndView.
 	 */
@@ -1153,6 +1205,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 检查请求是不是Multipart请求
 	 * Convert the request into a multipart request, and make multipart resolver available.
 	 * <p>If no multipart resolver is set, simply use the existing request.
 	 * @param request current HTTP request
@@ -1204,6 +1257,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 清除Multipart
 	 * Clean up any resources used by the given multipart request (if any).
 	 * @param request current HTTP request
 	 * @see MultipartResolver#cleanupMultipart
@@ -1274,6 +1328,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 通过注册的handlerExceptionResolvers确定错误模型和视图
 	 * Determine an error ModelAndView via the registered HandlerExceptionResolvers.
 	 * @param request current HTTP request
 	 * @param response current HTTP response
@@ -1378,6 +1433,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 将提供的请求转换为默认视图名称。
 	 * Translate the supplied request into a default view name.
 	 * @param request current HTTP servlet request
 	 * @return the view name (or {@code null} if no default found)
@@ -1389,6 +1445,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 把视图名解析成视图对象
 	 * Resolve the given view name into a View object (to be rendered).
 	 * <p>The default implementations asks all ViewResolvers of this dispatcher.
 	 * Can be overridden for custom resolution strategies, potentially based on
@@ -1427,6 +1484,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	}
 
 	/**
+	 * 在doService最后还原请求属性
 	 * Restore the request attributes after an include.
 	 * @param request current HTTP request
 	 * @param attributesSnapshot the snapshot of the request attributes before the include
