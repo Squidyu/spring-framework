@@ -243,6 +243,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		/**
+		 * 检查缓存，获取单例bean
+		 */
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
@@ -254,17 +257,26 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			/**
+			 * 获取给定bean实例的对象，如果是factorybean类型，则调用factorybean方法获取bean对象
+			 */
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
+			/**
+			 * 原型模式的循环依赖无法解决，抛出异常
+			 */
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
 			// Check if bean definition exists in this factory.
+			/**
+			 * 检查bean是否已经存在这个factory里面
+			 */
 			BeanFactory parentBeanFactory = getParentBeanFactory();
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 				// Not found -> check parent.
@@ -287,21 +299,36 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+				/**
+				 * 将指定的bean标记为已创建（或即将创建）。
+				 */
 				markBeanAsCreated(beanName);
 			}
 
 			try {
+				/**
+				 * 合并父BeanDefinition
+ 				 */
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				checkMergedBeanDefinition(mbd, beanName, args);
 
+				/**
+				 * 保证当前bean所依赖的bean的初始化
+				 */
 				// Guarantee initialization of beans that the current bean depends on.
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
+						/**
+						 * 循环依赖检查
+						 */
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+						/**
+						 * 将依赖的关系放入缓存，以便于当前bean销毁时先销毁依赖的bean
+						 */
 						registerDependentBean(dep, beanName);
 						try {
 							getBean(dep);
@@ -315,8 +342,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					/**
+					 * 尝试从缓存中加载单例bean
+					 */
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							/** 创建bean */
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
@@ -334,16 +365,22 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						/**
+						 * 原型模式bean创建前置处理，默认情况下记录当前bean正在创建
+						 */
 						beforePrototypeCreation(beanName);
+						/** 创建bean */
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
+						/** 原型模式bean创建后置处理，默认情况下移除当前bean正在创建的记录，也就是当前bean已经创建完成 */
 						afterPrototypeCreation(beanName);
 					}
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
 				else {
+					/** 其他scope类型的处理 */
 					String scopeName = mbd.getScope();
 					final Scope scope = this.scopes.get(scopeName);
 					if (scope == null) {
@@ -378,6 +415,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// Check if required type matches the type of the actual bean instance.
 		if (requiredType != null && !requiredType.isInstance(bean)) {
 			try {
+				/** 将值转换为所需类型（如有必要）*/
 				T convertedBean = getTypeConverter().convertIfNecessary(bean, requiredType);
 				if (convertedBean == null) {
 					throw new BeanNotOfRequiredTypeException(name, requiredType, bean.getClass());
@@ -1643,10 +1681,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
+		/**
+		 * name不为空并且以"&"开头
+		 */
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
+			/**
+			 * 如果beanInstance是NullBean类型，返回beanInstance
+			 */
 			if (beanInstance instanceof NullBean) {
 				return beanInstance;
 			}
+			/**
+			 * 如果beanInstance不是FactoryBean类型，返回异常
+			 */
 			if (!(beanInstance instanceof FactoryBean)) {
 				throw new BeanIsNotAFactoryException(transformedBeanName(name), beanInstance.getClass());
 			}
@@ -1655,22 +1702,46 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// Now we have the bean instance, which may be a normal bean or a FactoryBean.
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
+		/**
+		 * 现在我们有了bean实例，它可能是普通bean或factrybean。
+		 * 如果它是factory bean，我们使用它来创建bean实例，除非调用者实际上想要引用工厂。
+		 *
+		 * 如果bean不是FactoryBean或者name以"&"开头
+		 */
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}
 
+		/**
+		 * 过了上两步的判断到这里可以确定当前bean一定是FactoryBean
+		 */
 		Object object = null;
 		if (mbd == null) {
+			/**
+			 * 尝试从缓存中获取FactoryBean
+			 */
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
 			// Return bean instance from factory.
+			/**
+			 * 返回 FactoryBean类型实例
+			 */
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
+			/**
+			 * 缓存从FactoryBean获取的对象（如果它是单例）。
+			 */
 			if (mbd == null && containsBeanDefinition(beanName)) {
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
+			/**
+			 * 是否是用户自定义的而不是应用程序本身定义的
+			 */
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
+			 /**
+			  *  从FactoryBean中加载bean
+			  */
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;
