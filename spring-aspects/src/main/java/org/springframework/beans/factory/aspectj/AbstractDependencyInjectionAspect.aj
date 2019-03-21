@@ -28,6 +28,10 @@ import org.aspectj.lang.annotation.control.CodeGenerationHint;
  */
 public abstract aspect AbstractDependencyInjectionAspect {
 
+	/**
+	 * 是一个（组）基于正则表达式的表达式，有点绕，就是说他本身是一个表达式，但是他是基于正则语法的。
+	 * 通常一个pointcut，会选取程序中的某些我们感兴趣的执行点，或者说是程序执行点的集合
+	 */
 	private pointcut preConstructionCondition() :
 			leastSpecificSuperTypeConstruction() && preConstructionConfiguration();
 
@@ -49,28 +53,33 @@ public abstract aspect AbstractDependencyInjectionAspect {
 			if (thisJoinPoint.getSignature().getDeclaringType() == thisJoinPoint.getThis().getClass());
 
 	/**
+	 * 在构建之前选择要配置的bean中的连接点？默认情况下，使用与可配置注释中的默认值匹配的构造后注入。
 	 * Select join points in beans to be configured prior to construction?
 	 * By default, use post-construction injection matching the default in the Configurable annotation.
 	 */
 	public pointcut preConstructionConfiguration() : if (false);
 
 	/**
+	 * 为要插入依赖项的对象选择构造连接点
 	 * Select construction join points for objects to inject dependencies.
 	 */
 	public abstract pointcut beanConstruction(Object bean);
 
 	/**
+	 * 为要插入依赖项的对象选择反序列化联接点
 	 * Select deserialization join points for objects to inject dependencies.
 	 */
 	public abstract pointcut beanDeserialization(Object bean);
 
 	/**
+	 *在可配置bean中选择连接点
 	 * Select join points in a configurable bean.
 	 */
 	public abstract pointcut inConfigurableBean();
 
 
 	/**
+	 * 构造前置配置
 	 * Pre-construction configuration.
 	 */
 	@SuppressAjWarnings("adviceDidNotMatch")
@@ -80,6 +89,7 @@ public abstract aspect AbstractDependencyInjectionAspect {
 	}
 
 	/**
+	 * 构造后置配置
 	 * Post-construction configuration.
 	 */
 	@SuppressAjWarnings("adviceDidNotMatch")
@@ -89,6 +99,7 @@ public abstract aspect AbstractDependencyInjectionAspect {
 	}
 
 	/**
+	 * 后置反序列化配置
 	 * Post-deserialization configuration.
 	 */
 	@SuppressAjWarnings("adviceDidNotMatch")
@@ -99,6 +110,7 @@ public abstract aspect AbstractDependencyInjectionAspect {
 
 
 	/**
+	 * 配置给指定bean
 	 * Configure the given bean.
 	 */
 	public abstract void configureBean(Object bean);
