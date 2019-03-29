@@ -29,15 +29,20 @@ import org.springframework.util.Assert;
  * that include the package path (e.g. "mypackage/myresource.txt"). Useful for
  * test harnesses as well as for application contexts embedded within JARs.
  *
+ * 本地默认配置可以被getConfigLocations方法覆盖
+ * 配置路径可以用具体文件路径"/myfiles/context.xml"形式 也可以用"/myfiles/*-context.xml"形式
  * <p>The config location defaults can be overridden via {@link #getConfigLocations},
  * Config locations can either denote concrete files like "/myfiles/context.xml"
  * or Ant-style patterns like "/myfiles/*-context.xml" (see the
  * {@link org.springframework.util.AntPathMatcher} javadoc for pattern details).
  *
+ * 如果配了多个本地配置，相同的定义，后面的会覆盖前面的
  * <p>Note: In case of multiple config locations, later bean definitions will
  * override ones defined in earlier loaded files. This can be leveraged to
  * deliberately override certain bean definitions via an extra XML file.
  *
+ * 这是一个简单的一站式便利应用程序上下文。与GenericApplicationContext和org.springframework.beans.factory.xml.XmlBeanDefinitionReader
+ * 一起结合使用
  * <p><b>This is a simple, one-stop shop convenience ApplicationContext.
  * Consider using the {@link GenericApplicationContext} class in combination
  * with an {@link org.springframework.beans.factory.xml.XmlBeanDefinitionReader}
@@ -76,6 +81,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	}
 
 	/**
+	 * 创建一个新的ClassPathXmlApplicationContext通过xml文件加载定义，并自动刷新context
 	 * Create a new ClassPathXmlApplicationContext, loading the definitions
 	 * from the given XML file and automatically refreshing the context.
 	 * @param configLocation resource location
@@ -86,6 +92,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	}
 
 	/**
+	 * 创建一个新的ClassPathXmlApplicationContext通过xml文件加载定义，并自动刷新context
 	 * Create a new ClassPathXmlApplicationContext, loading the definitions
 	 * from the given XML files and automatically refreshing the context.
 	 * @param configLocations array of resource locations
@@ -96,6 +103,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	}
 
 	/**
+	 * 创建一个新的ClassPathXmlApplicationContext通过xml文件加载定义，并自动刷新context
 	 * Create a new ClassPathXmlApplicationContext with the given parent,
 	 * loading the definitions from the given XML files and automatically
 	 * refreshing the context.
@@ -110,6 +118,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	}
 
 	/**
+	 * 创建一个新的ClassPathXmlApplicationContext通过xml文件加载定义,是否刷新context
 	 * Create a new ClassPathXmlApplicationContext, loading the definitions
 	 * from the given XML files.
 	 * @param configLocations array of resource locations
