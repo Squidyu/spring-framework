@@ -52,6 +52,7 @@ package org.apache.commons.logging;
 public abstract class LogFactory {
 
 	/**
+	 * 获取给定类的Log对象
 	 * Convenience method to return a named logger.
 	 * @param clazz containing Class from which a log name will be derived
 	 */
@@ -60,6 +61,7 @@ public abstract class LogFactory {
 	}
 
 	/**
+	 * 根据类名获取Log对象
 	 * Convenience method to return a named logger.
 	 * @param name logical name of the <code>Log</code> instance to be returned
 	 */
@@ -69,6 +71,7 @@ public abstract class LogFactory {
 
 
 	/**
+	 * 此方法只存在于与异常公共日志记录API兼容的情况下。
 	 * This method only exists for compatibility with unusual Commons Logging API
 	 * usage like e.g. {@code LogFactory.getFactory().getInstance(Class/String)}.
 	 * @see #getInstance(Class)
