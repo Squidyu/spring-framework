@@ -28,48 +28,59 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
- * Spring's common JCL adapter behind {@link LogFactory} and {@link LogFactoryService}.
- * Detects the presence of Log4j 2.x / SLF4J, falling back to {@code java.util.logging}.
+ * Spring在logfactory和logfactoryservice后面的通用JCL适配器。检测Log4J 2 .x/SLF4J的存在，最后回到java.util.logging。
  *
  * @author Juergen Hoeller
  * @since 5.1
  */
 final class LogAdapter {
 
+	/* 从方法级扩展Log4j的Logger类*/
 	private static final String LOG4J_SPI = "org.apache.logging.log4j.spi.ExtendedLogger";
 
 	private static final String LOG4J_SLF4J_PROVIDER = "org.apache.logging.slf4j.SLF4JProvider";
 
+	/* 一个非强制性接口，帮助日志记录系统集成提取位置信息*/
 	private static final String SLF4J_SPI = "org.slf4j.spi.LocationAwareLogger";
 
+	/* SLF4J的Logger类 */
 	private static final String SLF4J_API = "org.slf4j.Logger";
 
-
+	/* LogApi枚举 */
 	private static final LogApi logApi;
 
 	static {
+		/* 是否初始化LOG4J_SPI成功*/
 		if (isPresent(LOG4J_SPI)) {
+			/* 是否初始化LOG4J_SLF4J_PROVIDER和SLF4J_SPI成功 */
 			if (isPresent(LOG4J_SLF4J_PROVIDER) && isPresent(SLF4J_SPI)) {
 				// log4j-to-slf4j bridge -> we'll rather go with the SLF4J SPI;
 				// however, we still prefer Log4j over the plain SLF4J API since
 				// the latter does not have location awareness support.
+				/* log4j-to-slf4j桥接，我们更倾向于选择slf4j SPI,但是，我们仍然喜欢log4j而不是普通的slf4j API，因为后者没有位置感知支持。 */
 				logApi = LogApi.SLF4J_LAL;
 			}
 			else {
 				// Use Log4j 2.x directly, including location awareness support
+				/* 直接使用log4j 2.x，包括位置感知支持 */
 				logApi = LogApi.LOG4J;
 			}
 		}
+		/* 是否初始化SLF4J_SPI成功*/
 		else if (isPresent(SLF4J_SPI)) {
 			// Full SLF4J SPI including location awareness support
+			/* 完整的SLF4J SPI，包括位置感知支持 */
 			logApi = LogApi.SLF4J_LAL;
 		}
+		/* 是否初始化SLF4J_API成功*/
 		else if (isPresent(SLF4J_API)) {
 			// Minimal SLF4J API without location awareness support
+			/* 阉割版SLF4J API 不包含位置感知支持 */
 			logApi = LogApi.SLF4J;
 		}
 		else {
 			// java.util.logging as default
+			/* java.util.logging的默认logApi */
 			logApi = LogApi.JUL;
 		}
 	}
@@ -80,16 +91,20 @@ final class LogAdapter {
 
 
 	/**
+	 * 为选中的API接口创建一个真实的Log对象
 	 * Create an actual {@link Log} instance for the selected API.
 	 * @param name the logger name
 	 */
 	public static Log createLog(String name) {
 		switch (logApi) {
 			case LOG4J:
+				/* Log4jAdapter创建Log */
 				return Log4jAdapter.createLog(name);
 			case SLF4J_LAL:
+				/* Slf4jAdapter创建位置感知Log */
 				return Slf4jAdapter.createLocationAwareLog(name);
 			case SLF4J:
+				/* Log4jAdapter创建不包含位置感知Log */
 				return Slf4jAdapter.createLog(name);
 			default:
 				// Defensively use lazy-initializing adapter class here as well since the
@@ -98,10 +113,12 @@ final class LogAdapter {
 				// case of Log4j or SLF4J, we are trying to prevent early initialization
 				// of the JavaUtilLog adapter - e.g. by a JVM in debug mode - when eagerly
 				// trying to parse the bytecode for all the cases of this switch clause.
+				/* 由于JDK9上默认不存在java.logging模块，因此在这里防御性的使用lazy-initializing适配器类创建log */
 				return JavaUtilAdapter.createLog(name);
 		}
 	}
 
+	/*初始化className*/
 	private static boolean isPresent(String className) {
 		try {
 			Class.forName(className, false, LogAdapter.class.getClassLoader());
