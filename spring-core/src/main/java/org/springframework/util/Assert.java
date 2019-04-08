@@ -677,6 +677,7 @@ public abstract class Assert {
 		return (msg.endsWith(":") || msg.endsWith(";") || msg.endsWith(",") || msg.endsWith("."));
 	}
 
+	/* msg以空格结尾时返回msg + 空串 + typeName 否则返回msg + ": " + typeName*/
 	private static String messageWithTypeName(String msg, @Nullable Object typeName) {
 		return msg + (msg.endsWith(" ") ? "" : ": ") + typeName;
 	}

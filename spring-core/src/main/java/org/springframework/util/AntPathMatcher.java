@@ -75,22 +75,27 @@ public class AntPathMatcher implements PathMatcher {
 	/** Default path separator: "/". */
 	public static final String DEFAULT_PATH_SEPARATOR = "/";
 
+	/* 缓存关闭阈值 */
 	private static final int CACHE_TURNOFF_THRESHOLD = 65536;
 
 	private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{[^/]+?\\}");
 
 	private static final char[] WILDCARD_CHARS = { '*', '?', '{' };
 
-
+	/* 路径分割符 */
 	private String pathSeparator;
 
+	/* 路径分割缓存 */
 	private PathSeparatorPatternCache pathSeparatorPatternCache;
 
+	/* 是否区分大小写 */
 	private boolean caseSensitive = true;
 
+	/* 是否去除空白字符串 */
 	private boolean trimTokens = false;
 
 	@Nullable
+	/* true激活无限模式缓存 false完全关闭模式缓存*/
 	private volatile Boolean cachePatterns;
 
 	private final Map<String, String[]> tokenizedPatternCache = new ConcurrentHashMap<>(256);
@@ -100,6 +105,7 @@ public class AntPathMatcher implements PathMatcher {
 
 	/**
 	 * Create a new instance with the {@link #DEFAULT_PATH_SEPARATOR}.
+	 * 默认分隔符创建一个示例
 	 */
 	public AntPathMatcher() {
 		this.pathSeparator = DEFAULT_PATH_SEPARATOR;
@@ -108,6 +114,7 @@ public class AntPathMatcher implements PathMatcher {
 
 	/**
 	 * A convenient, alternative constructor to use with a custom path separator.
+	 * 自定义分隔符创建一个实例
 	 * @param pathSeparator the path separator to use, must not be {@code null}.
 	 * @since 4.1
 	 */
@@ -120,6 +127,7 @@ public class AntPathMatcher implements PathMatcher {
 
 	/**
 	 * Set the path separator to use for pattern parsing.
+	 * 自定义分割符为空使用默认分割符，否则使用自定义分割符
 	 * <p>Default is "/", as in Ant.
 	 */
 	public void setPathSeparator(@Nullable String pathSeparator) {
@@ -168,6 +176,7 @@ public class AntPathMatcher implements PathMatcher {
 
 
 	@Override
+	/* path是否包含*或者？ */
 	public boolean isPattern(String path) {
 		return (path.indexOf('*') != -1 || path.indexOf('?') != -1);
 	}
@@ -183,6 +192,7 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 	/**
+	 * 判断给定模式与给定路径是否匹配，如判断"t?st"是否匹配"test"，或者"test/*"是否匹配"test/Test"
 	 * Actually match the given {@code path} against the given {@code pattern}.
 	 * @param pattern the pattern to match against
 	 * @param path the path String to test
@@ -193,6 +203,7 @@ public class AntPathMatcher implements PathMatcher {
 	protected boolean doMatch(String pattern, String path, boolean fullMatch,
 			@Nullable Map<String, String> uriTemplateVariables) {
 
+		/* path和pattern是否都以pathSeparator隔开或者都不以pathSeparator隔开*/
 		if (path.startsWith(this.pathSeparator) != pattern.startsWith(this.pathSeparator)) {
 			return false;
 		}
@@ -375,21 +386,30 @@ public class AntPathMatcher implements PathMatcher {
 	 * Tokenize the given path pattern into parts, based on this matcher's settings.
 	 * <p>Performs caching based on {@link #setCachePatterns}, delegating to
 	 * {@link #tokenizePath(String)} for the actual tokenization algorithm.
+	 * 基于此匹配器的设置，将给定的路径模式标记化为多个部分。根据setcachepatterns执行缓存，将实际标记化技术算法的路径指定为标记化路径
 	 * @param pattern the pattern to tokenize
 	 * @return the tokenized pattern parts
 	 */
 	protected String[] tokenizePattern(String pattern) {
+		/*  */
 		String[] tokenized = null;
 		Boolean cachePatterns = this.cachePatterns;
+		/*cachePatterns为空或者为false时获取tokenizedPatternCache里面的tokenized数组*/
 		if (cachePatterns == null || cachePatterns.booleanValue()) {
 			tokenized = this.tokenizedPatternCache.get(pattern);
 		}
 		if (tokenized == null) {
+			/*tokenized为空时根据trimTokens将pattern分割为多个部分，获得tokenized数组*/
 			tokenized = tokenizePath(pattern);
 			if (cachePatterns == null && this.tokenizedPatternCache.size() >= CACHE_TURNOFF_THRESHOLD) {
 				// Try to adapt to the runtime situation that we're encountering:
 				// There are obviously too many different patterns coming in here...
 				// So let's turn off the cache since the patterns are unlikely to be reoccurring.
+				/**
+				 *尝试适应我们遇到的运行时情况：
+				 * 很明显这里有太多不同的模式…
+				 * 因此，让我们关闭缓存，因为模式不太可能重复出现。
+				 * */
 				deactivatePatternCache();
 				return tokenized;
 			}
