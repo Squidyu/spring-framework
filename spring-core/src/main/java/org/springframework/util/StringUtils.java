@@ -1127,6 +1127,10 @@ public abstract class StringUtils {
 	 * @see java.util.StringTokenizer
 	 * @see String#trim()
 	 * @see #delimitedListToStringArray
+	 * str代表要进行分词的字符串，
+	 * delimiters是进行分词的分隔符，
+	 * trimTokens表示是否对每一个分词进行首尾去空字符串，
+	 * ignoreEmptyTokens代表分割之后是否保留空字符串
 	 */
 	public static String[] tokenizeToStringArray(
 			@Nullable String str, String delimiters, boolean trimTokens, boolean ignoreEmptyTokens) {

@@ -208,11 +208,13 @@ public class AntPathMatcher implements PathMatcher {
 			return false;
 		}
 
+		/* 对pattern进行分词，获取pattern的数组 */
 		String[] pattDirs = tokenizePattern(pattern);
 		if (fullMatch && this.caseSensitive && !isPotentialMatch(path, pattDirs)) {
 			return false;
 		}
 
+		/* 对path进行分词，获取path的数组*/
 		String[] pathDirs = tokenizePath(path);
 
 		int pattIdxStart = 0;
@@ -221,8 +223,10 @@ public class AntPathMatcher implements PathMatcher {
 		int pathIdxEnd = pathDirs.length - 1;
 
 		// Match all elements up to the first **
+		/* 将所有元素匹配到第一个** */
 		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			String pattDir = pattDirs[pattIdxStart];
+			/* pattDir 中有**跳出循环 */
 			if ("**".equals(pattDir)) {
 				break;
 			}
@@ -233,17 +237,28 @@ public class AntPathMatcher implements PathMatcher {
 			pathIdxStart++;
 		}
 
+
 		if (pathIdxStart > pathIdxEnd) {
 			// Path is exhausted, only match if rest of pattern is * or **'s
+			/**
+			 *  如果path分词数组正常执行完毕，则pathIdxStart是会比pathIdxEnd大1的，这个时候，
+			 *  如果pattern的字符串数组也正常耗尽，则来判断pattern和path的最后一个字符是否同步，
+			 *  按结果返回
+			 */
 			if (pattIdxStart > pattIdxEnd) {
 				return (pattern.endsWith(this.pathSeparator) == path.endsWith(this.pathSeparator));
 			}
 			if (!fullMatch) {
 				return true;
 			}
+			/**
+			 * pattIdxStart和pattIdxEnd相等，
+			 * 同时pattern的最后一个字符是*且path最后是一个分隔符，则直接返回true；
+			 */
 			if (pattIdxStart == pattIdxEnd && pattDirs[pattIdxStart].equals("*") && path.endsWith(this.pathSeparator)) {
 				return true;
 			}
+			/* 如果pattern的最后一个字符串是**则直接返回true */
 			for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
 				if (!pattDirs[i].equals("**")) {
 					return false;
@@ -251,6 +266,7 @@ public class AntPathMatcher implements PathMatcher {
 			}
 			return true;
 		}
+		/* pattern已经耗尽但是path还没耗尽，这时候肯定不匹配，直接返回false */
 		else if (pattIdxStart > pattIdxEnd) {
 			// String not exhausted, but pattern is. Failure.
 			return false;
@@ -261,6 +277,12 @@ public class AntPathMatcher implements PathMatcher {
 		}
 
 		// up to last '**'
+		/**
+		 * pattDir 中有**跳出上面的循环后
+		 *
+		 * 开始从后往前遍历，如果再次弹出来不是因为遇到了**，是正常遍历完成，这个时候，pathIdxStart是大于pathIdxEnd，
+		 * 这个时候字符串已经耗尽，如果pattern还没有耗尽，并且最后并不是**，则直接返回false；
+		 */
 		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			String pattDir = pattDirs[pattIdxEnd];
 			if (pattDir.equals("**")) {
@@ -282,6 +304,9 @@ public class AntPathMatcher implements PathMatcher {
 			return true;
 		}
 
+		/**
+		 * 如果上一个while中间再次出现**，并且path并没有耗尽，则进行下边的步骤：
+		 */
 		while (pattIdxStart != pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			int patIdxTmp = -1;
 			for (int i = pattIdxStart + 1; i <= pattIdxEnd; i++) {
@@ -332,9 +357,11 @@ public class AntPathMatcher implements PathMatcher {
 	}
 
 	private boolean isPotentialMatch(String path, String[] pattDirs) {
+		/*不去空格执行if方法体*/
 		if (!this.trimTokens) {
 			int pos = 0;
 			for (String pattDir : pattDirs) {
+				/*根据分割符判断需要跳过的长度*/
 				int skipped = skipSeparator(path, pos, this.pathSeparator);
 				pos += skipped;
 				skipped = skipSegment(path, pos, pattDir);
@@ -413,6 +440,7 @@ public class AntPathMatcher implements PathMatcher {
 				deactivatePatternCache();
 				return tokenized;
 			}
+			/* cachePatterns为空或者cachePatterns值为false时，往tokenizedPatternCache里面塞tokenized */
 			if (cachePatterns == null || cachePatterns.booleanValue()) {
 				this.tokenizedPatternCache.put(pattern, tokenized);
 			}
@@ -437,7 +465,7 @@ public class AntPathMatcher implements PathMatcher {
 	 */
 	private boolean matchStrings(String pattern, String str,
 			@Nullable Map<String, String> uriTemplateVariables) {
-
+		/* 对给定的pattern返回一个AntPathStringMatcher，默认取缓存否则创建一个新的*/
 		return getStringMatcher(pattern).matchStrings(str, uriTemplateVariables);
 	}
 
