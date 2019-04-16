@@ -30,6 +30,7 @@ import java.util.ListIterator;
  * automatically populated as they are requested. This is particularly
  * useful for data binding to {@link List Lists}, allowing for elements
  * to be created and added to the {@link List} in a "just in time" fashion.
+ * 简单的list包装类，允许根据请求自动填充元素。这对于数据绑定到列表特别有用，允许以“及时”的方式创建元素并将其添加到列表
  *
  * <p>Note: This class is not thread-safe. To create a thread-safe version,
  * use the {@link java.util.Collections#synchronizedList} utility methods.
@@ -46,12 +47,14 @@ public class AutoPopulatingList<E> implements List<E>, Serializable {
 
 	/**
 	 * The {@link List} that all operations are eventually delegated to.
+	 * 所有操作最终委托给的列表。
 	 */
 	private final List<E> backingList;
 
 	/**
 	 * The {@link ElementFactory} to use to create new {@link List} elements
 	 * on demand.
+	 * 用于按需创建新列表元素的elementFactory。
 	 */
 	private final ElementFactory<E> elementFactory;
 

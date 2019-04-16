@@ -30,6 +30,8 @@ import java.util.UUID;
  * @author Rossen Stoyanchev
  * @author Rob Winch
  * @since 4.0
+ *
+ * 在安全和性能上有一个平衡的UUID生成器
  */
 public class AlternativeJdkIdGenerator implements IdGenerator {
 
@@ -39,7 +41,9 @@ public class AlternativeJdkIdGenerator implements IdGenerator {
 	public AlternativeJdkIdGenerator() {
 		SecureRandom secureRandom = new SecureRandom();
 		byte[] seed = new byte[8];
+		/*生成用户指定的随机字节数*/
 		secureRandom.nextBytes(seed);
+		/*Random范围为BigInteger(seed)的long值*/
 		this.random = new Random(new BigInteger(seed).longValue());
 	}
 
@@ -47,13 +51,14 @@ public class AlternativeJdkIdGenerator implements IdGenerator {
 	@Override
 	public UUID generateId() {
 		byte[] randomBytes = new byte[16];
+		/*生成随机字节并将其放入用户提供的字节数组中。产生的随机字节数等于字节数组的长度。*/
 		this.random.nextBytes(randomBytes);
-
+		/*UUID的最高有效位*/
 		long mostSigBits = 0;
 		for (int i = 0; i < 8; i++) {
 			mostSigBits = (mostSigBits << 8) | (randomBytes[i] & 0xff);
 		}
-
+		/*UUID的最低有效位*/
 		long leastSigBits = 0;
 		for (int i = 8; i < 16; i++) {
 			leastSigBits = (leastSigBits << 8) | (randomBytes[i] & 0xff);
@@ -62,4 +67,10 @@ public class AlternativeJdkIdGenerator implements IdGenerator {
 		return new UUID(mostSigBits, leastSigBits);
 	}
 
+	public static void main(String[] args) {
+		AlternativeJdkIdGenerator alternativeJdkIdGenerator = new AlternativeJdkIdGenerator();
+
+		System.out.println(alternativeJdkIdGenerator.generateId());
+		System.out.println(UUID.randomUUID());
+	}
 }
