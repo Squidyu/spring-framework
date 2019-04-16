@@ -39,6 +39,7 @@ public abstract class Base64Utils {
 	 * Base64-encode the given byte array.
 	 * @param src the original byte array
 	 * @return the encoded byte array
+	 * 对src进行编码
 	 */
 	public static byte[] encode(byte[] src) {
 		if (src.length == 0) {
@@ -51,6 +52,7 @@ public abstract class Base64Utils {
 	 * Base64-decode the given byte array.
 	 * @param src the encoded byte array
 	 * @return the original byte array
+	 * 对src进行解码
 	 */
 	public static byte[] decode(byte[] src) {
 		if (src.length == 0) {
@@ -65,6 +67,7 @@ public abstract class Base64Utils {
 	 * @param src the original byte array
 	 * @return the encoded byte array
 	 * @since 4.2.4
+	 * 对URL类型src进行安全编码
 	 */
 	public static byte[] encodeUrlSafe(byte[] src) {
 		if (src.length == 0) {
@@ -79,6 +82,7 @@ public abstract class Base64Utils {
 	 * @param src the encoded byte array
 	 * @return the original byte array
 	 * @since 4.2.4
+	 * 对URL类型src进行安全解码
 	 */
 	public static byte[] decodeUrlSafe(byte[] src) {
 		if (src.length == 0) {
@@ -91,6 +95,7 @@ public abstract class Base64Utils {
 	 * Base64-encode the given byte array to a String.
 	 * @param src the original byte array (may be {@code null})
 	 * @return the encoded byte array as a UTF-8 String
+	 * 编码成string
 	 */
 	public static String encodeToString(byte[] src) {
 		if (src.length == 0) {
@@ -103,6 +108,7 @@ public abstract class Base64Utils {
 	 * Base64-decode the given byte array from an UTF-8 String.
 	 * @param src the encoded UTF-8 String
 	 * @return the original byte array
+	 * String解码成byte[]
 	 */
 	public static byte[] decodeFromString(String src) {
 		if (src.isEmpty()) {

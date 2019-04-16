@@ -44,6 +44,7 @@ import org.springframework.lang.Nullable;
 /**
  * Miscellaneous class utility methods.
  * Mainly for internal use within the framework.
+ * 各种class的共用方法，主要是spring框架内部使用。
  *
  * @author Juergen Hoeller
  * @author Keith Donald

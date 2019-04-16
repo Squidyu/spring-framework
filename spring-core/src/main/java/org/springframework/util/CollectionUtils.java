@@ -75,6 +75,7 @@ public abstract class CollectionUtils {
 	 * @return the converted List result
 	 * @see ObjectUtils#toObjectArray(Object)
 	 * @see Arrays#asList(Object[])
+	 * array转化为List
 	 */
 	@SuppressWarnings("rawtypes")
 	public static List arrayToList(@Nullable Object source) {
@@ -85,6 +86,7 @@ public abstract class CollectionUtils {
 	 * Merge the given array into the given Collection.
 	 * @param array the array to merge (may be {@code null})
 	 * @param collection the target Collection to merge the array into
+	 * 一个集合合并至另一个集合
 	 */
 	@SuppressWarnings("unchecked")
 	public static <E> void mergeArrayIntoCollection(@Nullable Object array, Collection<E> collection) {
@@ -101,6 +103,7 @@ public abstract class CollectionUtils {
 	 * default properties linked into the original Properties instance.
 	 * @param props the Properties instance to merge (may be {@code null})
 	 * @param map the target Map to merge the properties into
+	 * 将属性的属性名与属性值以key-value形式给map
 	 */
 	@SuppressWarnings("unchecked")
 	public static <K, V> void mergePropertiesIntoMap(@Nullable Properties props, Map<K, V> map) {
@@ -123,6 +126,7 @@ public abstract class CollectionUtils {
 	 * @param iterator the Iterator to check
 	 * @param element the element to look for
 	 * @return {@code true} if found, {@code false} otherwise
+	 * 检查给定的迭代器是否包含给定的元素
 	 */
 	public static boolean contains(@Nullable Iterator<?> iterator, Object element) {
 		if (iterator != null) {
@@ -141,6 +145,7 @@ public abstract class CollectionUtils {
 	 * @param enumeration the Enumeration to check
 	 * @param element the element to look for
 	 * @return {@code true} if found, {@code false} otherwise
+	 * 检查给定的Enumeration是否包含给定的元素
 	 */
 	public static boolean contains(@Nullable Enumeration<?> enumeration, Object element) {
 		if (enumeration != null) {
@@ -161,6 +166,7 @@ public abstract class CollectionUtils {
 	 * @param collection the Collection to check
 	 * @param element the element to look for
 	 * @return {@code true} if found, {@code false} otherwise
+	 * 检查给定的Collection是否包含给定的元素
 	 */
 	public static boolean containsInstance(@Nullable Collection<?> collection, Object element) {
 		if (collection != null) {
@@ -179,6 +185,7 @@ public abstract class CollectionUtils {
 	 * @param source the source Collection
 	 * @param candidates the candidates to search for
 	 * @return whether any of the candidates has been found
+	 * 如果candidates中的任何元素包含在source中返回true否则返回false
 	 */
 	public static boolean containsAny(Collection<?> source, Collection<?> candidates) {
 		if (isEmpty(source) || isEmpty(candidates)) {
@@ -200,6 +207,7 @@ public abstract class CollectionUtils {
 	 * @param source the source Collection
 	 * @param candidates the candidates to search for
 	 * @return the first present object, or {@code null} if not found
+	 * 返回第一个source中包含的candidates元素
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
@@ -221,6 +229,7 @@ public abstract class CollectionUtils {
 	 * @param type the type to look for
 	 * @return a value of the given type found if there is a clear match,
 	 * or {@code null} if none or more than one such value found
+	 * 找到给定类型的单个值，如果给定类型有多个值 返回null
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
@@ -269,6 +278,7 @@ public abstract class CollectionUtils {
 	 * @param collection the Collection to check
 	 * @return {@code true} if the collection contains a single reference or
 	 * multiple references to the same instance, {@code false} otherwise
+	 * 确定给定集合是否只包含单个唯一对象
 	 */
 	public static boolean hasUniqueObject(Collection<?> collection) {
 		if (isEmpty(collection)) {
@@ -322,6 +332,7 @@ public abstract class CollectionUtils {
 	 * @see SortedSet
 	 * @see LinkedHashMap#keySet()
 	 * @see java.util.LinkedHashSet
+	 * 返回Set的最后一个元素
 	 */
 	@Nullable
 	public static <T> T lastElement(@Nullable Set<T> set) {
@@ -346,6 +357,7 @@ public abstract class CollectionUtils {
 	 * @param list the List to check (may be {@code null} or empty)
 	 * @return the last element, or {@code null} if none
 	 * @since 5.0.3
+	 * 返回list最后一个元素
 	 */
 	@Nullable
 	public static <T> T lastElement(@Nullable List<T> list) {
